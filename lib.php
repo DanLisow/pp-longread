@@ -4,36 +4,6 @@ defined('MOODLE_INTERNAL') || die();
 require_once("$CFG->libdir/filelib.php");
 require_once("$CFG->libdir/resourcelib.php");
 
-class longread_content_file_info extends file_info_stored
-{
-
-    /**
-     * Возвращает родительский объект файла.
-     *
-     * @return file_info|null
-     */
-    public function get_parent()
-    {
-        if ($this->lf->get_filepath() === '/' and $this->lf->get_filename() === '.') {
-            return $this->browser->get_file_info($this->context);
-        }
-        return parent::get_parent();
-    }
-
-    /**
-     * Возвращает видимое имя файла.
-     *
-     * @return string
-     */
-    public function get_visible_name()
-    {
-        if ($this->lf->get_filepath() === '/' and $this->lf->get_filename() === '.') {
-            return $this->topvisiblename;
-        }
-        return parent::get_visible_name();
-    }
-}
-
 /**
  * Возвращает параметры для редактора в модуле Longread.
  *
@@ -101,8 +71,9 @@ function longread_update_instance($data, $mform = null)
         $context->id,
         'mod_longread',
         'content',
-        $data->id,
-        longread_get_editor_options($context)
+        0,
+        longread_get_editor_options($context),
+        $data->content
     );
 
     return true;
@@ -135,3 +106,41 @@ function longread_delete_instance($id)
     return true;
 }
 
+/**
+ * Serve the files from mod_longread file areas
+ *
+ * @param stdClass $course
+ * @param stdClass $cm
+ * @param context $context
+ * @param string $filearea
+ * @param array $args
+ * @param bool $forcedownload
+ * @param array $options
+ * @return bool|void
+ */
+function mod_longread_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = [])
+{
+    global $DB;
+
+    if ($context->contextlevel != CONTEXT_MODULE) {
+        return false;
+    }
+
+    require_login($course, true, $cm);
+
+    // if (!has_capability('mod/longread:view', $context)) {
+    //     return false;
+    // }
+
+    $itemid = array_shift($args);
+    $filename = array_pop($args);
+    $filepath = $args ? '/' . implode('/', $args) . '/' : '/';
+
+    $fs = get_file_storage();
+    $file = $fs->get_file($context->id, 'mod_longread', $filearea, $itemid, $filepath, $filename);
+    if (!$file) {
+        return false;
+    }
+
+    send_stored_file($file, 0, 0, $forcedownload, $options);
+}

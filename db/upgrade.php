@@ -7,7 +7,7 @@ function xmldb_longread_upgrade($oldversion)
 
     $dbman = $DB->get_manager();
 
-    if ($oldversion < 2024120704) {
+    if ($oldversion < 2024120705) {
         // $table = new xmldb_table('longread');
 
         // // Новое поле content
@@ -22,7 +22,7 @@ function xmldb_longread_upgrade($oldversion)
         //     $dbman->add_field($table, $field);
         // }
 
-        upgrade_mod_savepoint(true, 2024120704, 'longread');
+        upgrade_mod_savepoint(true, 2024120705, 'longread');
     }
 
     return true;

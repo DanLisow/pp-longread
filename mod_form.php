@@ -38,26 +38,61 @@ class mod_longread_mod_form extends moodleform_mod
 
         if ($this->current->instance) {
             $longread = $DB->get_record('longread', ['id' => $this->current->instance], '*', MUST_EXIST);
-            $defaultvalues['content'] = $this->merge_parts(json_decode($longread->content, true));
-            $defaultvalues['contentformat'] = $longread->contentformat;
+
+            $context = $this->context;
+
+            $content = $this->merge_parts(json_decode($longread->content, true));
 
             $draftitemid = file_get_submitted_draft_itemid('content');
-            $defaultvalues['content'] = file_prepare_draft_area(
+
+            $content = file_prepare_draft_area(
                 $draftitemid,
-                $this->context->id,
+                $context->id,
                 'mod_longread',
                 'content',
                 $longread->id,
-                longread_get_editor_options($this->context),
-                $this->merge_parts(json_decode($longread->content, true))
+                longread_get_editor_options($context),
+                $content
+            );
+
+            $content = file_rewrite_pluginfile_urls(
+                $content,
+                'pluginfile.php',
+                $context->id,
+                'mod_longread',
+                'content',
+                $longread->id
             );
 
             $defaultvalues['content_editor'] = [
-                'text' => $defaultvalues['content'],
-                'format' => $defaultvalues['contentformat'],
+                'text' => $content,
+                'format' => $longread->contentformat,
                 'itemid' => $draftitemid
             ];
         }
+    }
+
+    public function data_postprocessing($data)
+    {
+        global $DB;
+
+        $data = parent::data_postprocessing($data);
+
+        if ($data) {
+            $data->content = file_save_draft_area_files(
+                $data->content_editor['itemid'],
+                $this->context->id,
+                'mod_longread',
+                'content',
+                $data->id,
+                longread_get_editor_options($this->context),
+                $data->content_editor['text']
+            );
+
+            $data->content = json_encode($this->split_parts($data->content));
+        }
+
+        return $data;
     }
 
     /**

@@ -15,6 +15,9 @@ $PAGE->set_url('/mod/longread/view.php', ['id' => $cm->id]);
 $PAGE->set_title(format_string($longread->name));
 $PAGE->set_heading($course->fullname);
 
+$PAGE->requires->css(new moodle_url('/mod/longread/css/custom.css'));
+echo $OUTPUT->header();
+
 $parts = json_decode($longread->content, true);
 if (empty($parts)) {
     print_error('nolongreadcontent', 'mod_longread');
@@ -31,19 +34,10 @@ $firstpart = file_rewrite_pluginfile_urls(
     $longread->id
 );
 
-$options = array(
-    'noclean' => true,
-    'overflowdiv' => true,
-    'context' => $context
-);
-$firstpart = format_text($firstpart, $longread->contentformat, $options);
-
 $PAGE->requires->js_call_amd('mod_longread/loader', 'init', [$longread->id, $partcount]);
 $PAGE->requires->js_call_amd('mod_longread/animation', 'init');
 $PAGE->requires->js_call_amd('mod_longread/progress', 'init', [$partcount, 1]);
-$PAGE->requires->css(new moodle_url('/mod/longread/css/custom.css'));
 
-echo $OUTPUT->header();
 // echo $OUTPUT->heading(format_string($longread->name));
 
 

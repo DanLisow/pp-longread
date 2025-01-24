@@ -46,8 +46,13 @@ class get_part extends external_api
             return ['content' => '', 'error' => true];
         }
 
+        $options = array(
+            'noclean' => true,
+            'overflowdiv' => true,
+            'context' => $context
+        );
+
         $formatted = file_rewrite_pluginfile_urls($parts[$part - 1], 'pluginfile.php', $context->id, 'mod_longread', 'content', $longread->id);
-        $formatted = format_text($formatted, $longread->contentformat, ['context' => $context]);
 
         return ['content' => $formatted, 'error' => false];
     }
